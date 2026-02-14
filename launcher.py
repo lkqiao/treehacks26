@@ -12,10 +12,10 @@ def print_banner():
     banner = """
 ╔══════════════════════════════════════════════════════════╗
 ║                                                          ║
-║  中文 Chinese Character Tutor 🎨                        ║
+║  中文 Chinese Character Tutor 🎨                          ║
 ║                                                          ║
-║  Learn to write Chinese with real-time feedback         ║
-║  Powered by MediaPipe hand detection & DTW matching     ║
+║  Learn to write Chinese with real-time feedback          ║
+║  Powered by MediaPipe hand detection & DTW matching      ║
 ║                                                          ║
 ╚══════════════════════════════════════════════════════════╝
 """
@@ -34,10 +34,10 @@ def check_dependencies():
     
     if missing:
         print(f"❌ Missing dependencies: {', '.join(missing)}")
-        print("Run: pip install -r requirements.txt")
+        print("Run: uv sync")
         return False
     
-    print("✓ All dependencies installed")
+    print("All dependencies installed")
     return True
 
 def check_camera():
@@ -52,7 +52,7 @@ def check_camera():
         return False
     
     cap.release()
-    print("✓ Camera accessible")
+    print("Camera accessible")
     return True
 
 def check_characters_json():
@@ -61,13 +61,13 @@ def check_characters_json():
         print("❌ characters.json not found")
         return False
     
-    print("✓ Character database loaded")
+    print("Character database loaded")
     return True
 
 def main():
     print_banner()
     
-    print("\n📋 Pre-launch checks...")
+    print("\nPre-launch checks...")
     
     checks = [
         ("Dependencies", check_dependencies),
@@ -88,16 +88,16 @@ def main():
         print("\n⚠️  Some checks failed. Fix issues above and try again.")
         sys.exit(1)
     
-    print("\n✓ All systems ready!")
-    print("\n🚀 Launching Chinese Character Tutor...\n")
+    print("\nAll systems ready!")
+    print("\nLaunching Chinese Character Tutor...\n")
     print("=" * 60)
     print("KEYBOARD SHORTCUTS:")
-    print("  1 - Teaching Mode      (learn with guides)")
-    print("  2 - Pinyin Recognition (audio recall)")
-    print("  3 - English Translation (gamified)")
+    print("  1 - Teaching Mode")
+    print("  2 - Pinyin Recognition")
+    print("  3 - English Translation")
     print()
     print("  SPACE - Submit/Next     C - Clear drawing")
-    print("  M - Menu               Q - Quit")
+    print("  M - Menu                Q - Quit")
     print("=" * 60)
     print()
     
