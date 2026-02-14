@@ -47,16 +47,32 @@ if not os.path.exists(MODEL_PATH):
         sys.exit(1)
 
 # -------------------------------
-# MediaPipe Hand Setup (Tasks API)
+# MediaPipe Hand Setup (Tasks API) – GPU when available
 # -------------------------------
-base_options = python.BaseOptions(model_asset_path=MODEL_PATH)
-options = vision.HandLandmarkerOptions(
-    base_options=base_options,
-    num_hands=1,
-    min_hand_detection_confidence=0.7,
-    min_hand_presence_confidence=0.7,
-    running_mode=vision.RunningMode.VIDEO
-)
+def _create_hand_landmarker():
+    """Create HandLandmarker, using GPU when available (Linux/macOS), else CPU."""
+    for use_gpu in (True, False):
+        try:
+            base_opts = python.BaseOptions(
+                model_asset_path=MODEL_PATH,
+                delegate=python.BaseOptions.Delegate.GPU if use_gpu else python.BaseOptions.Delegate.CPU
+            )
+            opts = vision.HandLandmarkerOptions(
+                base_options=base_opts,
+                num_hands=1,
+                min_hand_detection_confidence=0.7,
+                min_hand_presence_confidence=0.7,
+                running_mode=vision.RunningMode.VIDEO
+            )
+            lm = vision.HandLandmarker.create_from_options(opts)
+            print("MediaPipe: Using", "GPU" if use_gpu else "CPU")
+            return lm
+        except Exception as e:
+            if use_gpu:
+                continue
+            raise
+    raise RuntimeError("Failed to create HandLandmarker")
+
 # -------------------------------
 # Webcam Setup
 # -------------------------------
@@ -86,7 +102,7 @@ Z_THRESHOLD = -0.05      # Max z for "finger close to screen" (adjust experiment
 # -------------------------------
 frame_count = 0
 
-with vision.HandLandmarker.create_from_options(options) as hand_landmarker:
+with _create_hand_landmarker() as hand_landmarker:
     while True:
         ret, frame = cap.read()
         if not ret:
