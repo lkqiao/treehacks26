@@ -56,6 +56,7 @@ while True:
     results = hands.process(rgb)
 
     finger_detected = False
+    drawing_allowed = False  # NEW: for UI indicator
 
     if results.multi_hand_landmarks:
         hand_landmarks = results.multi_hand_landmarks[0]
@@ -66,7 +67,11 @@ while True:
 
         # Only draw if finger is “close enough”
         if z < Z_THRESHOLD:
+            drawing_allowed = True
             finger_detected = True
+
+            # Green fingertip indicator
+            cv2.circle(frame, (x, y), 12, (0, 255, 0), -1)
 
             if not drawing:
                 drawing = True
@@ -81,8 +86,10 @@ while True:
                     strokes[-1].append((x, y))
                     prev_point = (x, y)
         else:
-            # Finger far → treat as pen lift
-            finger_detected = False
+            drawing_allowed = False
+
+            # Red fingertip indicator (not drawing)
+            cv2.circle(frame, (x, y), 12, (0, 0, 255), -1)
 
     # Finger lifted → end stroke
     if not finger_detected and drawing:
@@ -93,6 +100,22 @@ while True:
     # Draw hand landmarks for feedback
     if results.multi_hand_landmarks:
         mp_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+
+    # Drawing status text (put on frame BEFORE blending)
+    if drawing_allowed:
+        cv2.putText(frame, "DRAWING ENABLED",
+                    (20, 40),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (0, 255, 0),
+                    2)
+    else:
+        cv2.putText(frame, "LIFT FINGER (NOT DRAWING)",
+                    (20, 40),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (0, 0, 255),
+                    2)
 
     # Overlay canvas on webcam feed
     combined = cv2.addWeighted(frame, 0.7, canvas, 0.3, 0)
