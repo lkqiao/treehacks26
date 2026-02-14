@@ -24,8 +24,12 @@ from ui_renderer import UIRenderer, AnimationManager
 # Hand Detection Setup (Tasks API)
 # ===============================
 
-# Index finger tip landmark index (21-point hand model)
+# Hand landmark indices (21-point hand model)
 INDEX_FINGER_TIP = 8
+THUMB_TIP = 4
+
+# Pinch-to-draw detection
+PINCH_THRESHOLD_NORM = 0.06  # distance in normalized coords between thumb & index tips
 
 # Hand connections for drawing
 HAND_CONNECTIONS = [
@@ -70,7 +74,6 @@ hand_landmarker = vision.HandLandmarker.create_from_options(options)
 # ===============================
 
 MOVE_THRESHOLD = 5
-Z_THRESHOLD = -0.05
 CAMERA_INDEX = 0
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
@@ -308,9 +311,13 @@ class TutorApp:
         if result.hand_landmarks:
             hand_landmarks = result.hand_landmarks[0]
             tip = hand_landmarks[INDEX_FINGER_TIP]
-            x, y, z = int(tip.x * w), int(tip.y * h), tip.z
+            thumb = hand_landmarks[THUMB_TIP]
+            x, y = int(tip.x * w), int(tip.y * h)
             
-            if z < Z_THRESHOLD:
+            # Pinch detection: distance between thumb and index finger tips
+            pinch_dist = np.hypot(tip.x - thumb.x, tip.y - thumb.y)
+            
+            if pinch_dist < PINCH_THRESHOLD_NORM:
                 finger_detected = True
                 
                 if not self.drawing:
