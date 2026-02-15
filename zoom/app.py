@@ -1,15 +1,21 @@
 import os
 import requests
 from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask_socketio import SocketIO, emit
+from flask_cors import CORS
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'zoom-tutor-secret'
+CORS(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 CLIENT_ID = os.getenv("ZOOM_CLIENT_ID")
 CLIENT_SECRET = os.getenv("ZOOM_CLIENT_SECRET")
 ACCOUNT_ID = os.getenv("ZOOM_ACCOUNT_ID")
 
 # Local launcher endpoint (set via environment variable)
-# Example: "https://abcd1234.ngrok.io" or "http://localhost:5001" for local testing
+# Example: "wss://abcd1234.ngrok.io" or "ws://localhost:5001" for local testing
+LAUNCHER_WS_URL = os.getenv("LAUNCHER_WS_URL", "ws://localhost:5001")
 LAUNCHER_URL = os.getenv("LAUNCHER_URL", "http://localhost:5001")
 
 CHINESE_CHARACTERS = ["你", "好", "学", "习", "书"]  # your 5 demo characters
@@ -129,6 +135,42 @@ def launcher_status():
     except:
         return jsonify({"status": "offline", "launcher_url": LAUNCHER_URL})
 
+# ===== WEBSOCKET ENDPOINTS =====
+
+@socketio.on('connect')
+def handle_connect():
+    """Handle WebSocket connection from web client."""
+    print("[WebSocket] Web client connected")
+    emit('connection_response', {'data': 'Connected to web app'})
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    """Handle WebSocket disconnection."""
+    print("[WebSocket] Web client disconnected")
+
+@socketio.on('send_character')
+def handle_send_character(data):
+    """Forward character change to launcher via WebSocket."""
+    character = data.get('character')
+    print(f"[WebSocket] Sending character: {character}")
+    # This would connect to launcher's WebSocket and forward the message
+    # For now, also keep REST API fallback
+    socketio.emit('character_to_launcher', {'character': character})
+
+@socketio.on('send_mode')
+def handle_send_mode(data):
+    """Forward mode change to launcher via WebSocket."""
+    mode = data.get('mode')
+    print(f"[WebSocket] Sending mode: {mode}")
+    socketio.emit('mode_to_launcher', {'mode': mode})
+
+@socketio.on('send_action')
+def handle_send_action(data):
+    """Forward action to launcher via WebSocket."""
+    action = data.get('action')
+    print(f"[WebSocket] Sending action: {action}")
+    socketio.emit('action_to_launcher', {'action': action})
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5050))
-    app.run(host="0.0.0.0", port=port)
+    socketio.run(app, host="0.0.0.0", port=port, allow_unsafe_werkzeug=True)

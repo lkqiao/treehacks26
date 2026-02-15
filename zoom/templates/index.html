@@ -108,10 +108,14 @@
         }
 
     </style>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
 <body>
 
     <h1>Zoom + Character Drawing MVP</h1>
+
+    <!-- Connection Status -->
+    <div id="connection-status" style="padding: 10px 20px; margin: 10px; border-radius: 5px; background: #fff; font-weight: bold;"></div>
 
     {% if error %}
         <p style="color:red; font-weight:bold;">Error: {{ error }}</p>
@@ -146,12 +150,112 @@
             {% endfor %}
         </form>
     </div>
+
+    <!-- Control Panel with WebSocket -->
+    <div style="background: #f5f5f5; padding: 20px; margin: 20px; border-radius: 10px; max-width: 600px;">
+        <h3>Control Panel</h3>
+        <div id="control-status" style="margin-bottom: 15px; padding: 10px; background: #fff; border-radius: 5px; min-height: 20px;"></div>
+        
+        <!-- Mode Selection -->
+        <div style="margin: 15px 0;">
+            <label style="font-weight: bold;">Mode:</label><br>
+            <button onclick="sendMode(1)" style="background: #667eea;">1. Teaching</button>
+            <button onclick="sendMode(2)" style="background: #764ba2;">2. Pinyin</button>
+            <button onclick="sendMode(3)" style="background: #ff6f61;">3. Translation</button>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="margin: 15px 0;">
+            <label style="font-weight: bold;">Actions:</label><br>
+            <button onclick="sendAction('submit')" style="background: #4caf50;">Submit</button>
+            <button onclick="sendAction('clear')" style="background: #ff9800;">Clear</button>
+            <button onclick="sendAction('next')" style="background: #2196f3;">Next</button>
+        </div>
+
+        <!-- Send Character -->
+        <div style="margin: 15px 0;">
+            <label style="font-weight: bold;">Send Character:</label><br>
+            <input type="text" id="charInput" placeholder="Character" style="padding: 10px; font-size: 1.5rem; width: 80px; text-align: center;">
+            <button onclick="sendCharacter()" style="background: #9c27b0;">Send</button>
+        </div>
+    </div>
     {% endif %}
 
     {% if selected_char %}
         <p class="selected-text">You selected: <strong>{{ selected_char }}</strong></p>
         <p>Next: Draw this character!</p>
     {% endif %}
+
+    <script>
+        // Initialize WebSocket connection
+        const socket = io();
+
+        // Handle connection
+        socket.on('connect', () => {
+            console.log('Connected to server');
+            updateConnectionStatus('Connected', '#28a745');
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from server');
+            updateConnectionStatus('Disconnected', '#dc3545');
+        });
+
+        socket.on('connection_response', (data) => {
+            console.log('Server response:', data);
+        });
+
+        socket.on('character_updated', (data) => {
+            console.log('Character updated:', data);
+            updateControlStatus('[OK] Character updated: ' + data.character, '#28a745');
+        });
+
+        socket.on('mode_updated', (data) => {
+            console.log('Mode updated:', data);
+            updateControlStatus('[OK] Mode updated', '#28a745');
+        });
+
+        socket.on('action_completed', (data) => {
+            console.log('Action completed:', data);
+            updateControlStatus('[OK] Action: ' + data.action, '#28a745');
+        });
+
+        function updateConnectionStatus(message, color) {
+            const statusDiv = document.getElementById('connection-status');
+            if (statusDiv) {
+                statusDiv.innerHTML = message;
+                statusDiv.style.background = color;
+                statusDiv.style.color = '#fff';
+            }
+        }
+
+        function updateControlStatus(message, color) {
+            const statusDiv = document.getElementById('control-status');
+            if (statusDiv) {
+                statusDiv.innerHTML = message;
+                statusDiv.style.color = color;
+            }
+        }
+
+        function sendMode(mode) {
+            socket.emit('send_mode', { mode: mode });
+        }
+
+        function sendAction(action) {
+            socket.emit('send_action', { action: action });
+        }
+
+        function sendCharacter() {
+            const charInput = document.getElementById('charInput');
+            const character = charInput.value.trim();
+            if (!character) {
+                alert('Please enter a character');
+                return;
+            }
+            socket.emit('send_character', { character: character });
+            charInput.value = '';
+        }
+    </script>
 
 </body>
 </html>
