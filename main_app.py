@@ -1377,8 +1377,6 @@ class TutorApp:
         self._draw_shortcuts(display)
         self._draw_nav_buttons(display)
         self._draw_calibration_overlay(display)
-        self._draw_help_button(display)
-        self._draw_help_menu(display)
         return display
 
     def render_mode_select(self, frame: np.ndarray) -> np.ndarray:
