@@ -410,6 +410,13 @@ class TutorApp:
             print("Error: Camera failed to initialize.")
             print("Check camera permissions in system settings.")
             sys.exit(1)
+        
+        # Verify camera is working
+        ret, test_frame = self.cap.read()
+        if not ret:
+            print("Error: Could not read from camera.")
+            sys.exit(1)
+        print(f"Camera initialized successfully. Frame shape: {test_frame.shape}")
 
         self.frame_count = 0
 
@@ -1018,12 +1025,15 @@ class TutorApp:
     def run(self):
         cv2.namedWindow("Chinese Character Tutor", cv2.WINDOW_NORMAL)
         cv2.resizeWindow("Chinese Character Tutor", WINDOW_WIDTH, WINDOW_HEIGHT)
+        print(f"Window created. Press 1/2/3 to select mode or Q to quit.")
+        print(f"Camera: {CAMERA_INDEX}, Resolution: {WINDOW_WIDTH}x{WINDOW_HEIGHT}")
 
         running = True
+        frame_count = 0
         while running:
             ret, frame = self.cap.read()
             if not ret:
-                print("Failed to read frame")
+                print("Failed to read frame from camera")
                 break
 
             frame = cv2.resize(frame, (WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -1047,11 +1057,15 @@ class TutorApp:
                     self.select_new_character()
 
             cv2.imshow("Chinese Character Tutor", display)
+            frame_count += 1
+            if frame_count % 60 == 0:
+                print(f"Frame {frame_count} displayed. Mode: {self.mode}")
 
             key = cv2.waitKey(30) & 0xFF
             if key != 255:
                 running = self.handle_key(key)
 
+        print("Closing application...")
         self.cap.release()
         cv2.destroyAllWindows()
 

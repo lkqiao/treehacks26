@@ -17,7 +17,7 @@ def print_banner():
     banner = """
 ╔══════════════════════════════════════════════════════════╗
 ║                                                          ║
-║  中文 Chinese Character Tutor 🎨                          ║
+║  Chinese Character Tutor                                    ║
 ║                                                          ║
 ║  Learn to write Chinese with real-time feedback          ║
 ║  Powered by MediaPipe hand detection & DTW matching      ║
@@ -38,7 +38,7 @@ def check_dependencies():
             missing.append(package)
     
     if missing:
-        print(f"❌ Missing dependencies: {', '.join(missing)}")
+        print(f"[ERROR] Missing dependencies: {', '.join(missing)}")
         print("Run: uv sync")
         return False
     
@@ -47,11 +47,11 @@ def check_dependencies():
 
 def check_camera():
     """Check if camera is accessible."""
-    import cv2
-    cap = cv2.VideoCapture(1)
+    import cv2    
+    cap = cv2.VideoCapture(2)
     if not cap.isOpened():
-        print("❌ Camera not accessible")
-        print("macOS: Settings → Privacy & Security → Camera → Grant access")
+        print("[ERROR] Camera not accessible")
+        print("macOS: System Preferences > Security & Privacy > Camera > Grant access")
         print("Windows: Check camera in Device Manager")
         cap.release()
         return False
@@ -65,14 +65,14 @@ def check_character_data():
     graphics_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                  'makemeahanzi', 'graphics.txt')
     if not os.path.exists(graphics_path):
-        print("❌ makemeahanzi/graphics.txt not found")
+        print("[ERROR] makemeahanzi/graphics.txt not found")
         return False
 
     try:
         from characters import CHARACTER_LIST
         print(f"Character database loaded ({len(CHARACTER_LIST)} characters)")
     except Exception as e:
-        print(f"❌ Failed to load characters module: {e}")
+        print(f"[ERROR] Failed to load characters module: {e}")
         return False
 
     return True
@@ -180,11 +180,11 @@ def main():
             if not check_fn():
                 all_passed = False
         except Exception as e:
-            print(f"❌ {name}: {str(e)}")
+            print(f"[ERROR] {name}: {str(e)}")
             all_passed = False
     
     if not all_passed:
-        print("\n⚠️  Some checks failed. Fix issues above and try again.")
+        print("\n[WARNING] Some checks failed. Fix issues above and try again.")
         sys.exit(1)
     
     print("\nAll systems ready!")
