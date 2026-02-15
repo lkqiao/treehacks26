@@ -1303,8 +1303,6 @@ class TutorApp:
         # Partial stroke progress
         cd.draw_partial_stroke(display, bbox)
 
-        # User strokes
-        self._draw_user_strokes(display)
         self._draw_direction_arrows(display)
         self._draw_live_feedback(display)
 
