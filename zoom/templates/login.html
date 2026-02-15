@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>汉字 Tutor — Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --ink:   #1a1a2e;
+    --gold:  #c9953a;
+    --gold-s:#f0c060;
+    --paper: #faf8f3;
+    --mist:  #8899aa;
+    --red:   #c0392b;
+    --zoom:  #0B5CFF;
+  }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Faint brush-stroke background characters */
+  .bg-han {
+    position: absolute;
+    font-family: 'Noto Serif SC', serif;
+    color: rgba(255,255,255,.03);
+    pointer-events: none;
+    user-select: none;
+    line-height: 1;
+  }
+  .bg-han:nth-child(1) { font-size: 28vw; top: -8vh; left: -4vw; }
+  .bg-han:nth-child(2) { font-size: 18vw; bottom: -5vh; right: -2vw; color: rgba(201,149,58,.04); }
+
+  .card {
+    position: relative;
+    z-index: 1;
+    background: var(--paper);
+    border-radius: 16px;
+    padding: 56px 48px 48px;
+    max-width: 420px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 32px 80px rgba(0,0,0,.4);
+  }
+
+  .logo-han {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 4rem;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 4px;
+    letter-spacing: .06em;
+  }
+  .logo-en {
+    font-size: .78rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--mist);
+    margin-bottom: 36px;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 10px;
+  }
+  p {
+    font-size: .9rem;
+    color: var(--mist);
+    line-height: 1.6;
+    margin-bottom: 32px;
+  }
+
+  .btn-zoom {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 14px 24px;
+    background: var(--zoom);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all .18s;
+    box-shadow: 0 4px 16px rgba(11,92,255,.35);
+  }
+  .btn-zoom:hover {
+    background: #0042cc;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(11,92,255,.45);
+  }
+  .btn-zoom:active { transform: scale(.98); }
+
+  .zoom-icon {
+    width: 22px; height: 22px;
+    background: #fff;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .zoom-icon svg { width: 16px; height: 16px; }
+
+  .error-box {
+    background: #fff0ee;
+    border: 1.5px solid #f5c6c0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: .84rem;
+    color: var(--red);
+    margin-bottom: 24px;
+    text-align: left;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid #e8e4d8;
+    margin: 32px 0 20px;
+  }
+  .footnote {
+    font-size: .74rem;
+    color: #bbb;
+    line-height: 1.5;
+  }
+  .footnote a { color: var(--mist); }
+</style>
+</head>
+<body>
+<div class="bg-han">学</div>
+<div class="bg-han">字</div>
+
+<div class="card">
+  <div class="logo-han">汉字</div>
+  <div class="logo-en">Character Tutor</div>
+
+  <h1>Welcome, Teacher</h1>
+  <p>Log in with your Zoom account to create practice sessions and guide students in real time.</p>
+
+  {% if error %}
+  <div class="error-box">⚠ {{ error }}</div>
+  {% endif %}
+
+  <a href="/zoom/login" class="btn-zoom">
+    <div class="zoom-icon">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="24" height="24" rx="4" fill="#0B5CFF"/>
+        <path d="M4 8.5C4 7.67 4.67 7 5.5 7h8C14.33 7 15 7.67 15 8.5v7c0 .83-.67 1.5-1.5 1.5h-8C4.67 17 4 16.33 4 15.5v-7zM16 10.5l4-2.5v8l-4-2.5V10.5z" fill="white"/>
+      </svg>
+    </div>
+    Continue with Zoom
+  </a>
+
+  <hr class="divider">
+  <p class="footnote">
+    Your Zoom credentials are never stored — we use OAuth so you authorise
+    directly on Zoom's site. Meetings are created on your account.<br><br>
+    <a href="https://marketplace.zoom.us" target="_blank">Zoom Marketplace</a> ·
+    <a href="https://zoom.us/privacy" target="_blank">Privacy Policy</a>
+  </p>
+</div>
+</body>
+</html>
