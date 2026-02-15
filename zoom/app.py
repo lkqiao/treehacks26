@@ -39,7 +39,7 @@ def create_meeting(token):
 
 @app.route("/", methods=["GET"])
 def index():
-    return render_template("index.html")
+    return render_template("index.html", launcher_ws_url=LAUNCHER_WS_URL)
 
 @app.route("/start-meeting", methods=["POST"])
 def start_meeting():
@@ -48,19 +48,19 @@ def start_meeting():
         meeting = create_meeting(token)
         join_url = meeting.get("join_url")
         # show_chars=False: show the Zoom link first
-        return render_template("index.html", join_url=join_url, show_chars=False)
+        return render_template("index.html", join_url=join_url, show_chars=False, launcher_ws_url=LAUNCHER_WS_URL)
     except Exception as e:
         return render_template("index.html", error=str(e))
 
 @app.route("/choose-characters", methods=["GET"])
 def choose_characters():
     # show 5 characters
-    return render_template("index.html", show_chars=True, characters=CHINESE_CHARACTERS)
+    return render_template("index.html", show_chars=True, characters=CHINESE_CHARACTERS, launcher_ws_url=LAUNCHER_WS_URL)
 
 @app.route("/select-character", methods=["POST"])
 def select_character():
     selected = request.form.get("character")
-    return render_template("index.html", selected_char=selected)
+    return render_template("index.html", selected_char=selected, launcher_ws_url=LAUNCHER_WS_URL)
 
 # ===== API ENDPOINTS TO COMMUNICATE WITH LOCAL LAUNCHER =====
 

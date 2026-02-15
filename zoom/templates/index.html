@@ -187,8 +187,27 @@
     {% endif %}
 
     <script>
-        // Initialize WebSocket connection
+        // Initialize WebSocket connection to web app
         const socket = io();
+        // Launcher WebSocket URL passed from server (may be empty)
+        const launcherWsUrl = "{{ launcher_ws_url|default('') }}";
+        let launcherSocket = null;
+        let launcherConnected = false;
+        if (launcherWsUrl) {
+            try {
+                launcherSocket = io(launcherWsUrl);
+                launcherSocket.on('connect', () => {
+                    launcherConnected = true;
+                    console.log('Connected to launcher at', launcherWsUrl);
+                });
+                launcherSocket.on('disconnect', () => {
+                    launcherConnected = false;
+                    console.log('Disconnected from launcher');
+                });
+            } catch (e) {
+                console.log('Launcher socket init error', e);
+            }
+        }
 
         // Handle connection
         socket.on('connect', () => {
@@ -239,10 +258,12 @@
 
         function sendMode(mode) {
             socket.emit('send_mode', { mode: mode });
+            if (launcherSocket && launcherConnected) launcherSocket.emit('send_mode', { mode: mode });
         }
 
         function sendAction(action) {
             socket.emit('send_action', { action: action });
+            if (launcherSocket && launcherConnected) launcherSocket.emit('send_action', { action: action });
         }
 
         function sendCharacter() {
@@ -253,6 +274,7 @@
                 return;
             }
             socket.emit('send_character', { character: character });
+            if (launcherSocket && launcherConnected) launcherSocket.emit('send_character', { character: character });
             charInput.value = '';
         }
     </script>
