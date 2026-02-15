@@ -148,8 +148,8 @@ def angle_to_bgr(angle_deg: float) -> Tuple[int, int, int]:
     return (b, g, r)  # BGR for OpenCV
 
 
-COLOR_TEXT = (100, 255, 100)
-COLOR_TEXT_DIM = (150, 150, 150)
+COLOR_TEXT = (100, 220, 150)
+COLOR_TEXT_DIM = (120, 140, 160)
 COLOR_TEXT_TITLE = (150, 200, 255)
 
 LINE_THICKNESS = 5
@@ -577,13 +577,16 @@ class TutorApp:
                 self.complete_time = time.time()
                 self.completed_characters += 1
                 if self.mode == "pinyin":
-                    self.score += 150
+                    points = 150
+                    self.score += points
                 elif self.mode == "english":
-                    self.score += 200
+                    points = 200
+                    self.score += points
                 else:
-                    self.score += 100
+                    points = 100
+                    self.score += points
                 self.feedback.append(
-                    f"Character {self.char_info['char']} complete! +points"
+                    f"Character {self.char_info['char']} complete! +{points}"
                 )
             else:
                 self.feedback.append(
@@ -936,18 +939,41 @@ class TutorApp:
                             cv2.LINE_AA, tipLength=0.35)
 
     def _draw_live_feedback(self, frame):
-        """Draw live direction-angle text while drawing."""
+        """Draw live direction-angle text in a dedicated panel at middle-left."""
         if not self.drawing or self.current_stroke_idx >= len(self.ref_strokes):
             return
         if self.live_ok is None:
             label = "direction: draw more ..."
             col = COL_NEUTRAL
         else:
-            tag = "OK" if self.live_ok else "WRONG"
-            label = (f"direction: {tag}  {self.live_angle:.1f}deg"
-                     f"  (max {MAX_DIR_ANGLE_DEG}deg)")
+            tag = "✓ OK" if self.live_ok else "✗ WRONG"
+            label = (f"direction: {tag}  {self.live_angle:.1f}°")
             col = angle_to_bgr(self.live_angle)
-        put_text(frame, label, (10, 30), 24, col)
+        
+        # Get frame dimensions
+        h, w = frame.shape[:2]
+        
+        # Create panel at middle-left (narrow, tall)
+        text_size, _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.65, 2)
+        panel_width = text_size[0] + 24
+        panel_height = 80  # Tall panel
+        panel_x = 15  # Left margin
+        panel_y = (h - panel_height) // 2  # Middle height
+        panel_x2 = panel_x + panel_width
+        panel_y2 = panel_y + panel_height
+        
+        # Draw semi-transparent background
+        overlay = frame.copy()
+        cv2.rectangle(overlay, (panel_x, panel_y), (panel_x2, panel_y2), (20, 25, 40), -1)
+        cv2.addWeighted(overlay, 0.8, frame, 0.2, 0, frame)
+        
+        # Draw border with accent color
+        cv2.rectangle(frame, (panel_x, panel_y), (panel_x2, panel_y2), col, 2)
+        
+        # Draw text centered in panel
+        text_x = panel_x + (panel_width - text_size[0]) // 2
+        text_y = panel_y + (panel_height + text_size[1]) // 2
+        put_text(frame, label, (text_x, text_y), 20, col)
 
     def _draw_animated_arrow(self, frame, median_pts, progress):
         """Draw an animated arrow traveling along the median polyline."""
@@ -991,21 +1017,24 @@ class TutorApp:
             cumulative += seg_len
 
     def _draw_drawing_box(self, frame):
-        """Faint reference box and crosshairs for the drawing area."""
+        """Faint reference box and crosshairs for the drawing area with modern styling."""
         bbox = self.drawing_bbox
         cx = (bbox[0] + bbox[2]) // 2
         cy = (bbox[1] + bbox[3]) // 2
-        cv2.line(frame, (cx, bbox[1]), (cx, bbox[3]), (50, 50, 50), 1)
-        cv2.line(frame, (bbox[0], cy), (bbox[2], cy), (50, 50, 50), 1)
+        cv2.line(frame, (cx, bbox[1]), (cx, bbox[3]), (60, 70, 90), 1)
+        cv2.line(frame, (bbox[0], cy), (bbox[2], cy), (60, 70, 90), 1)
         cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]),
-                      (50, 50, 50), 1)
+                      (70, 85, 110), 1)
 
     def _draw_status_bar(self, frame, status_text):
-        """Semi-transparent status bar at the bottom."""
+        """Semi-transparent status bar at the bottom with modern styling."""
         h, w = frame.shape[:2]
         overlay = frame.copy()
-        cv2.rectangle(overlay, (0, h - 90), (w, h), (0, 0, 0), -1)
-        cv2.addWeighted(overlay, 0.6, frame, 0.4, 0, frame)
+        # Modern darker background
+        cv2.rectangle(overlay, (0, h - 90), (w, h), (15, 20, 30), -1)
+        cv2.addWeighted(overlay, 0.75, frame, 0.25, 0, frame)
+        # Top border for separation
+        cv2.line(frame, (0, h - 90), (w, h - 90), (80, 100, 130), 2)
         put_text(frame, status_text, (20, h - 55), 28, COLOR_TEXT)
         if self.feedback:
             put_text(frame, self.feedback[-1], (20, h - 20), 20, COLOR_TEXT_DIM)
@@ -1013,7 +1042,7 @@ class TutorApp:
     def _draw_shortcuts(self, frame):
         h, w = frame.shape[:2]
         shortcuts = "C:Clear  N:Next  M:Menu  Q:Quit"
-        put_text(frame, shortcuts, (w - 450, 55), 18, COLOR_TEXT_DIM)
+        put_text(frame, shortcuts, (w - 450, 55), 18, (100, 130, 160))
 
     # --- In-game nav buttons (Menu / Quit) ---
 
@@ -1046,22 +1075,23 @@ class TutorApp:
                 bg = (60, 40, 100) if not hovered else (100, 60, 140)
                 border = (200, 120, 255)
             elif hovered:
-                bg = (80, 80, 80)
-                border = COLOR_TEXT_TITLE
+                bg = (70, 100, 150)
+                border = (150, 200, 255)
             else:
-                bg = (30, 30, 30)
-                border = (70, 70, 70)
+                bg = (45, 45, 55)
+                border = (100, 100, 120)
             cv2.rectangle(frame, (x1, y1), (x2, y2), bg, -1)
             cv2.rectangle(frame, (x1, y1), (x2, y2), border, 2 if hovered or (i == 0 and self.calibrating) else 1)
             text_col = (255, 255, 255) if hovered else COLOR_TEXT_DIM
-            tx = x1 + (NAV_BTN_W - len(label) * 10) // 2
-            ty = (y1 + y2) // 2 + 6
+            text_size, _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.65, 2)
+            tx = x1 + (NAV_BTN_W - text_size[0]) // 2
+            ty = y1 + (NAV_BTN_H + text_size[1]) // 2 + 2
             put_text(frame, label, (tx, ty), 22, text_col)
 
         # Cursor feedback when hovering a nav button
         if self.hovered_nav_idx >= 0 and self.tip_xy is not None:
             cx, cy = self.tip_xy
-            col = (0, 255, 0) if self.pinch_active else (255, 255, 255)
+            col = (0, 200, 100) if self.pinch_active else (200, 200, 200)
             cv2.circle(frame, (cx, cy), 15, col, 2)
             if self.pinch_active:
                 cv2.circle(frame, (cx, cy), 8, col, -1)
@@ -1139,20 +1169,41 @@ class TutorApp:
             )
 
     def _draw_calibration_overlay(self, frame):
-        """Draw calibration instructions, corner markers, and preview box."""
+        """Draw calibration instructions at middle-left, below feedback panel."""
         if not self.calibrating:
             return
         h, w = frame.shape[:2]
-        # Semi-transparent instruction banner
-        overlay = frame.copy()
-        cv2.rectangle(overlay, (0, 60), (w, 120), (0, 0, 0), -1)
-        cv2.addWeighted(overlay, 0.7, frame, 0.3, 0, frame)
+        
+        # Generate calibration message
         n = len(self.calib_corners)
         if n == 0:
-            msg = "CALIBRATE: Pinch at the TOP-LEFT corner of your drawing area"
+            msg = "CALIBRATE: Pinch at TOP-LEFT corner"
         else:
-            msg = "CALIBRATE: Now pinch at the BOTTOM-RIGHT corner"
-        put_text(frame, msg, (20, 100), 26, (200, 120, 255))
+            msg = "CALIBRATE: Pinch at BOTTOM-RIGHT corner"
+        
+        # Create panel at middle-left (below feedback panel to avoid overlap)
+        text_size, _ = cv2.getTextSize(msg, cv2.FONT_HERSHEY_SIMPLEX, 0.65, 2)
+        panel_width = text_size[0] + 24
+        panel_height = 80
+        panel_x = 15  # Left margin
+        # Position below feedback panel (feedback is at (h-80)//2, height 80)
+        feedback_y_end = (h - 80) // 2 + 80 + 20  # Add gap
+        panel_y = feedback_y_end
+        panel_x2 = panel_x + panel_width
+        panel_y2 = panel_y + panel_height
+        
+        # Draw semi-transparent background
+        overlay = frame.copy()
+        cv2.rectangle(overlay, (panel_x, panel_y), (panel_x2, panel_y2), (40, 30, 60), -1)
+        cv2.addWeighted(overlay, 0.8, frame, 0.2, 0, frame)
+        
+        # Draw border with purple accent (calibration color)
+        cv2.rectangle(frame, (panel_x, panel_y), (panel_x2, panel_y2), (200, 120, 255), 2)
+        
+        # Draw text centered in panel
+        text_x = panel_x + (panel_width - text_size[0]) // 2
+        text_y = panel_y + (panel_height + text_size[1]) // 2
+        put_text(frame, msg, (text_x, text_y), 20, (200, 120, 255))
 
         # Draw placed corners
         for i, (cx, cy) in enumerate(self.calib_corners):
@@ -1218,7 +1269,7 @@ class TutorApp:
         put_text(display, title, (20, 55), 32, COLOR_TEXT)
 
         if self.character_complete:
-            status = "Character complete! (auto-advancing...)"
+            status = "Character complete!"
         else:
             status = f"Stroke {self.current_stroke_idx + 1} / {cd.num_strokes}"
 
@@ -1279,7 +1330,7 @@ class TutorApp:
         #     cv2.circle(display, (cx, cy), 12, (0, 255, 255), 2)
 
         if self.character_complete:
-            status = "Character complete! (auto-advancing...)"
+            status = "Character complete!"
         else:
             status = f"Stroke {self.current_stroke_idx + 1} / {cd.num_strokes}"
 
@@ -1331,18 +1382,21 @@ class TutorApp:
         self._draw_shortcuts(display)
         self._draw_nav_buttons(display)
         self._draw_calibration_overlay(display)
+        self._draw_help_button(display)
+        self._draw_help_menu(display)
         return display
 
     def render_mode_select(self, frame: np.ndarray) -> np.ndarray:
         display = frame.copy()
         overlay = display.copy()
+        # Modern gradient-like background
         cv2.rectangle(overlay, (0, 0), (WINDOW_WIDTH, WINDOW_HEIGHT),
-                      (0, 0, 0), -1)
-        cv2.addWeighted(overlay, 0.5, display, 0.5, 0, display)
+                      (20, 25, 40), -1)
+        cv2.addWeighted(overlay, 0.7, display, 0.3, 0, display)
         h, w = display.shape[:2]
 
         put_text(display, "Chinese Character Tutor",
-                 (w // 2 - 300, 80), 60, (255, 200, 100))
+                 (w // 2 - 300, 80), 60, (150, 200, 255))
 
         # Interactive buttons
         keys = ["1", "2", "3", "4", "Q"]
@@ -1353,23 +1407,29 @@ class TutorApp:
             by2 = by + MENU_BUTTON_H
             hovered = (i == self.hovered_button_idx)
 
-            # Button background
+            # Button background with modern colors
             if hovered:
-                cv2.rectangle(display, (bx, by), (bx2, by2), (80, 80, 80), -1)
-                cv2.rectangle(display, (bx, by), (bx2, by2), COLOR_TEXT_TITLE, 2)
+                cv2.rectangle(display, (bx, by), (bx2, by2), (100, 150, 200), -1)
+                cv2.rectangle(display, (bx, by), (bx2, by2), (150, 200, 255), 3)
             else:
-                cv2.rectangle(display, (bx, by), (bx2, by2), (30, 30, 30), -1)
-                cv2.rectangle(display, (bx, by), (bx2, by2), (70, 70, 70), 1)
+                cv2.rectangle(display, (bx, by), (bx2, by2), (50, 60, 80), -1)
+                cv2.rectangle(display, (bx, by), (bx2, by2), (100, 120, 150), 2)
 
-            # Button text
-            text_col = (255, 255, 255) if hovered else COLOR_TEXT_TITLE
-            put_text(display, f"[{key}] {title}", (bx + 20, by + 38), 32, text_col)
-            put_text(display, desc, (bx + 20, by + 68), 22, COLOR_TEXT_DIM)
+            # Button text with proper centering
+            text_col = (255, 255, 255) if hovered else (180, 200, 220)
+            title_text = f"[{key}] {title}"
+            title_size, _ = cv2.getTextSize(title_text, cv2.FONT_HERSHEY_SIMPLEX, 1.0, 2)
+            title_x = bx + (MENU_BUTTON_W - title_size[0]) // 2
+            put_text(display, title_text, (title_x, by + 45), 32, text_col)
+            
+            desc_size, _ = cv2.getTextSize(desc, cv2.FONT_HERSHEY_SIMPLEX, 0.65, 1)
+            desc_x = bx + (MENU_BUTTON_W - desc_size[0]) // 2
+            put_text(display, desc, (desc_x, by + 70), 22, (150, 170, 190))
 
         # Cursor at fingertip
         if self.tip_xy is not None:
             cx, cy = self.tip_xy
-            col = (0, 255, 0) if self.pinch_active else (255, 255, 255)
+            col = (0, 200, 100) if self.pinch_active else (200, 200, 200)
             cv2.circle(display, (cx, cy), 15, col, 2)
             if self.pinch_active:
                 cv2.circle(display, (cx, cy), 8, col, -1)
