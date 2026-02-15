@@ -1316,7 +1316,7 @@ class TutorApp:
                 cv2.rectangle(display, (bx, by), (bx2, by2), (100, 120, 150), 2)
 
             text_col   = (255, 255, 255) if hovered else (180, 200, 220)
-            title_text = f"[{key}] {title}"
+            title_text = f"{title}"
             title_size, _ = cv2.getTextSize(title_text, cv2.FONT_HERSHEY_SIMPLEX, 1.0, 2)
             put_text(display, title_text,
                      (bx + (MENU_BUTTON_W - title_size[0]) // 2, by + 45), 32, text_col)
@@ -1331,7 +1331,7 @@ class TutorApp:
             if self.pinch_active:
                 cv2.circle(display, (cx, cy), 8, col, -1)
 
-        put_text(display, "Pinch a button or press 1/2/3/4/Q",
+        put_text(display, "Pinch a button to select",
                  (w // 2 - 280, h - 60), 28, COLOR_TEXT)
         return display
 
