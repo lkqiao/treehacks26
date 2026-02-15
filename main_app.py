@@ -20,6 +20,7 @@ import math
 import sys
 import time
 import os
+import requests
 from typing import List, Tuple, Optional
 from PIL import Image, ImageDraw, ImageFont
 
@@ -77,6 +78,25 @@ options = vision.HandLandmarkerOptions(
     running_mode=vision.RunningMode.VIDEO
 )
 hand_landmarker = vision.HandLandmarker.create_from_options(options)
+
+# ===============================
+# WiFi Haptic Feedback Integration
+# ===============================
+
+ESP_IP = "172.20.10.12"  # ESP8266 haptic feedback device IP
+WIFI_ENABLED = True  # Toggle WiFi feedback on/off
+
+def set_drawing_state(state: bool):
+    """Send drawing state to haptic feedback device via WiFi."""
+    if not WIFI_ENABLED:
+        return
+    
+    url = f"http://{ESP_IP}/drawing"
+    try:
+        requests.post(url, json={"drawing": state}, timeout=2)
+    except Exception as e:
+        # Silently fail to not disrupt user experience
+        pass
 
 # ===============================
 # Constants
@@ -575,6 +595,7 @@ class TutorApp:
 
             if self.pinch_active and not prev_pinch:
                 self.pinch_just_started = True
+                set_drawing_state(True)  # Send haptic feedback: start drawing
 
             # Mode-specific input handling
             if self.mode == "mode_select":
@@ -596,6 +617,7 @@ class TutorApp:
             self.drawing = False
             self.prev_point = None
             self.finish_stroke()
+            set_drawing_state(False)  # Send haptic feedback: stop drawing
 
         return frame
 
