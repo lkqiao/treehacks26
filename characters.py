@@ -127,6 +127,22 @@ def load_graphics(path: str):
                 data[char] = obj
     return data
 
+def load_dictionary(path: str):
+    """Load dictionary.txt; return dict char -> {pinyin, english}."""
+    data = {}
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            obj = json.loads(line)
+            
+            char = obj.get("character")
+            pinyin = obj.get("pinyin")
+            english = obj.get("definition")
+            if pinyin and english:
+                data[char] = {"pinyin": pinyin, "english": english}
+    return data
 
 def character_to_stroke_svgs(char: str, obj: dict, viewbox: str = "0 0 1024 1024") -> list:
     strokes = obj.get("strokes", [])
@@ -147,6 +163,7 @@ def character_to_stroke_svgs(char: str, obj: dict, viewbox: str = "0 0 1024 1024
 # Load data (path relative to this file)
 _DIR = os.path.dirname(os.path.abspath(__file__))
 DATA = load_graphics(os.path.join(_DIR, "makemeahanzi", "graphics.txt"))
+DICTIONARY = load_dictionary(os.path.join(_DIR, "makemeahanzi", "dictionary.txt"))
 cached_character_data = {}
 
 
@@ -158,6 +175,8 @@ class CharacterData:
     def __init__(self, char: str):
         self.char = char
         self.obj = DATA[char]
+        self.pinyin = DICTIONARY[char]["pinyin"]
+        self.english = DICTIONARY[char]["english"]
         self.stroke_svgs = character_to_stroke_svgs(char, self.obj)
         self.stroke_medians = [normalize_makemeahanzi(np.array(s)) for s in self.obj.get("medians", [])]
         self.stroke_polygons = []
@@ -251,7 +270,7 @@ class CharacterData:
         d_dir = None
         done = False
         min_progress = math.floor(self.partial_stroke_progress)
-        for _ in range(4):
+        for _ in range(5):
             pp_int = int(self.partial_stroke_progress)
             if pp_int + 1 >= n:
                 done = True
@@ -263,7 +282,7 @@ class CharacterData:
                 continue
             d_dir = d_next / d_len
             prog = np.dot(d_dir, movement) - 0.2 * move_norm
-            self.partial_stroke_progress += prog / d_len / 1300
+            self.partial_stroke_progress += prog / d_len / 1500
             if prog < 0:
                 break
 
@@ -330,50 +349,49 @@ def get_character(char: str) -> "CharacterData":
 # Curated Character List
 # ==============================
 
-CHARACTER_LIST = [
-    {"char": "一", "pinyin": "yī", "english": "one"},
-    {"char": "二", "pinyin": "èr", "english": "two"},
-    {"char": "三", "pinyin": "sān", "english": "three"},
-    {"char": "四", "pinyin": "sì", "english": "four"},
-    {"char": "五", "pinyin": "wǔ", "english": "five"},
-    {"char": "六", "pinyin": "liù", "english": "six"},
-    {"char": "七", "pinyin": "qī", "english": "seven"},
-    {"char": "八", "pinyin": "bā", "english": "eight"},
-    {"char": "九", "pinyin": "jiǔ", "english": "nine"},
-    {"char": "十", "pinyin": "shí", "english": "ten"},
-    {"char": "人", "pinyin": "rén", "english": "person"},
-    {"char": "大", "pinyin": "dà", "english": "big"},
-    {"char": "小", "pinyin": "xiǎo", "english": "small"},
-    {"char": "上", "pinyin": "shàng", "english": "up/above"},
-    {"char": "下", "pinyin": "xià", "english": "down/below"},
-    {"char": "中", "pinyin": "zhōng", "english": "middle"},
-    {"char": "山", "pinyin": "shān", "english": "mountain"},
-    {"char": "水", "pinyin": "shuǐ", "english": "water"},
-    {"char": "火", "pinyin": "huǒ", "english": "fire"},
-    {"char": "木", "pinyin": "mù", "english": "wood/tree"},
-    {"char": "日", "pinyin": "rì", "english": "sun/day"},
-    {"char": "月", "pinyin": "yuè", "english": "moon/month"},
-    {"char": "口", "pinyin": "kǒu", "english": "mouth"},
-    {"char": "手", "pinyin": "shǒu", "english": "hand"},
-    {"char": "目", "pinyin": "mù", "english": "eye"},
-    {"char": "耳", "pinyin": "ěr", "english": "ear"},
-    {"char": "田", "pinyin": "tián", "english": "field"},
-    {"char": "土", "pinyin": "tǔ", "english": "earth/soil"},
-    {"char": "天", "pinyin": "tiān", "english": "sky/heaven"},
-    {"char": "女", "pinyin": "nǚ", "english": "woman"},
-    {"char": "子", "pinyin": "zǐ", "english": "child/son"},
-    {"char": "王", "pinyin": "wáng", "english": "king"},
-    {"char": "马", "pinyin": "mǎ", "english": "horse"},
-    {"char": "㕡", "pinyin": "jǐng", "english": "neck"},
+CHARACTER_LIST = [ "新", "年", "快", "乐", "一",
+    "二",
+    "三",
+    "四",
+    "五",
+    "六",
+    "七",
+    "八",
+    "九",
+    "十",
+    "人",
+    "大",
+    "小",
+    "上",
+    "下",
+    "中",
+    "山",
+    "水",
+    "火",
+    "木",
+    "日",
+    "月",
+    "口",
+    "手",
+    "目",
+    "耳",
+    "田",
+    "土",
+    "云",
+    
 ]
 
 # Filter to only characters present in MakeMeAHanzi data
-CHARACTER_LIST = [c for c in CHARACTER_LIST if c["char"] in DATA]
+CHARACTER_LIST = [c for c in CHARACTER_LIST if c in DATA]
 
-
+cur_ind = 0
 def get_random_character_info() -> dict:
     """Get a random character entry from the curated list."""
-    return random.choice(CHARACTER_LIST)
+    # global cur_ind
+    # char = CHARACTER_LIST[cur_ind]
+    # cur_ind = (cur_ind + 1) % len(CHARACTER_LIST)
+    char = random.choice(CHARACTER_LIST)
+    return char
 
 
 # ==============================

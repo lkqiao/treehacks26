@@ -150,7 +150,7 @@ def angle_to_bgr(angle_deg: float) -> Tuple[int, int, int]:
     return (b, g, r)  # BGR for OpenCV
 
 
-COLOR_TEXT = (100, 220, 150)
+COLOR_TEXT = (100, 150, 100)
 COLOR_TEXT_DIM = (120, 140, 160)
 COLOR_TEXT_TITLE = (150, 200, 255)
 
@@ -501,8 +501,10 @@ class TutorApp:
             self.ref_strokes.append(RefStroke(pts_disp))
 
     def select_new_character(self):
-        self.char_info  = get_random_character_info()
-        self.char_data  = get_character(self.char_info["char"])
+        self.char = get_random_character_info()
+        
+        self.char_data  = get_character(self.char)
+        self.char_info  = {"char": self.char, "pinyin": self.char_data.pinyin, "english": self.char_data.english}
         self._build_ref_strokes()
         self.current_stroke_idx   = 0
         self.user_strokes         = []
@@ -547,7 +549,7 @@ class TutorApp:
                 self.hint_active     = False
                 self.hint_was_active = False
             return
-
+        
         stroke_px  = self.current_user_stroke[:]
         colors     = self.seg_colors[:]
         angles     = self.seg_angles[:]
@@ -615,23 +617,23 @@ class TutorApp:
     # ----------------------------
     # Hand detection & drawing input
     # ----------------------------
-
+    
     def process_frame(self, frame: np.ndarray) -> np.ndarray:
         frame = cv2.flip(frame, 1)
         h, w, _ = frame.shape
         self._last_frame_shape = (h, w)
         self._compute_drawing_bbox(w, h)
-
+        
         rgb      = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
         self.frame_count += 1
         timestamp_ms = self.frame_count * 33
         result = hand_landmarker.detect_for_video(mp_image, timestamp_ms)
-
+        
         prev_pinch              = self.pinch_active
         self.pinch_just_started = False
         self.tip_xy             = None
-
+        
         if result.hand_landmarks:
             hand_lms = result.hand_landmarks[0]
             tip      = hand_lms[INDEX_FINGER_TIP]
@@ -760,7 +762,6 @@ class TutorApp:
                         self.drawn_len += seg_len
                         self.pts_display.append((dx, dy))
 
-                        self.live_counter += 1
                         if (self.live_counter % LIVE_CHECK_EVERY_N == 0
                                 and self.current_stroke_idx < len(self.ref_strokes)):
                             ok, ang, t, ref_tan, u_dir = evaluate_point(
@@ -1206,11 +1207,11 @@ class TutorApp:
         status = ("Character complete!" if self.character_complete
                   else f"Stroke {self.current_stroke_idx + 1} / {cd.num_strokes}")
         self._draw_status_bar(display, status)
-        self._draw_shortcuts(display)
+        #self._draw_shortcuts(display)
         self._draw_nav_buttons(display)
         self._draw_calibration_overlay(display)
         return display
-
+    
     def render_free_draw_mode(self, frame: np.ndarray) -> np.ndarray:
         display = frame.copy()
         if not self.char_data:
@@ -1228,14 +1229,14 @@ class TutorApp:
         self._draw_direction_arrows(display)
         self._draw_live_feedback(display)
 
-        title = (f"Free Draw: {self.char_info['char']} "
+        title = (f"Free Draw: "
                  f"({self.char_info['pinyin']}) - {self.char_info['english']}")
         put_text(display, title, (20, 55), 32, COLOR_TEXT)
 
         status = ("Character complete!" if self.character_complete
                   else f"Stroke {self.current_stroke_idx + 1} / {cd.num_strokes}")
         self._draw_status_bar(display, status)
-        self._draw_shortcuts(display)
+        #self._draw_shortcuts(display)
         self._draw_nav_buttons(display)
         self._draw_calibration_overlay(display)
         return display
@@ -1289,13 +1290,13 @@ class TutorApp:
         self._draw_nav_buttons(display)
         self._draw_calibration_overlay(display)
         return display
-
+    
     def render_mode_select(self, frame: np.ndarray) -> np.ndarray:
         display = frame.copy()
         overlay = display.copy()
         cv2.rectangle(overlay, (0, 0), (WINDOW_WIDTH, WINDOW_HEIGHT), (20, 25, 40), -1)
         cv2.addWeighted(overlay, 0.7, display, 0.3, 0, display)
-
+        
         h, w = display.shape[:2]
         put_text(display, "FreeStroke",
                  (w // 2 - 300, 80), 60, (150, 200, 255))
@@ -1334,7 +1335,7 @@ class TutorApp:
         put_text(display, "Pinch a button to select",
                  (w // 2 - 280, h - 60), 28, COLOR_TEXT)
         return display
-
+    
     # ----------------------------
     # Input handling
     # ----------------------------
@@ -1388,7 +1389,7 @@ class TutorApp:
                 if self.character_complete:
                     self.select_new_character()
         return True
-
+    
     # ----------------------------
     # Main loop
     # ----------------------------
@@ -1406,13 +1407,13 @@ class TutorApp:
             if not ret:
                 print("Failed to read frame from camera")
                 break
-
+            
             frame   = cv2.resize(frame, (WINDOW_WIDTH, WINDOW_HEIGHT))
             frame   = self.process_frame(frame)
-
+            
             if self.should_quit:
                 break
-
+            
             if self.mode == "mode_select":
                 display = self.render_mode_select(frame)
             elif self.mode == "teaching":
@@ -1423,7 +1424,7 @@ class TutorApp:
                 display = self.render_recall_mode(frame)
             else:
                 display = frame.copy()
-
+            
             if self.complete_time is not None:
                 if time.time() - self.complete_time >= AUTO_ADVANCE_DELAY:
                     self.select_new_character()
@@ -1436,7 +1437,7 @@ class TutorApp:
             key = cv2.waitKey(30) & 0xFF
             if key != 255:
                 running = self.handle_key(key)
-
+            
         print("Closing application...")
         self.cap.release()
         cv2.destroyAllWindows()
