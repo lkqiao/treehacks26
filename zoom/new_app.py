@@ -15,6 +15,8 @@ app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", secrets.token_hex(32))
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
+from dotenv import load_dotenv
+load_dotenv()
 # ─────────────── Zoom OAuth Config ───────────────
 ZOOM_CLIENT_ID     = os.getenv("ZOOM_CLIENT_ID")
 ZOOM_CLIENT_SECRET = os.getenv("ZOOM_CLIENT_SECRET")

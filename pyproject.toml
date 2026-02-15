@@ -15,4 +15,5 @@ dependencies = [
     "colour>=0.1.5",
     "flask-socketio>=5.6.0",
     "flask-cors>=6.0.2",
+    "python-dotenv>=1.2.1",
 ]
