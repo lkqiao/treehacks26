@@ -398,6 +398,7 @@ class TutorApp:
         self.hovered_nav_idx = -1          # in-game nav button under fingertip
         self.should_quit = False           # set True to exit main loop
         self._last_frame_shape = (WINDOW_HEIGHT, WINDOW_WIDTH)
+        self.free_draw_lost_frames = 0     # frames since hand was last seen (free_draw)
 
         # Drawing state
         self.user_strokes: list = []           # completed: list of (pts_px, seg_colors)
@@ -424,9 +425,8 @@ class TutorApp:
         self.calib_corners: list = []  # collected corner points [(x,y), ...]
         self.custom_bbox: Optional[Tuple[int, int, int, int]] = None  # user-set bbox
 
-        # Feedback & scoring
+        # Feedback
         self.feedback: List[str] = []
-        self.score = 0
         self.completed_characters = 0
         self.character_complete = False
         self.complete_time: Optional[float] = None
@@ -576,17 +576,8 @@ class TutorApp:
                 self.character_complete = True
                 self.complete_time = time.time()
                 self.completed_characters += 1
-                if self.mode == "pinyin":
-                    points = 150
-                    self.score += points
-                elif self.mode == "english":
-                    points = 200
-                    self.score += points
-                else:
-                    points = 100
-                    self.score += points
                 self.feedback.append(
-                    f"Character {self.char_info['char']} complete! +{points}"
+                    f"Character {self.char_info['char']} complete!"
                 )
             else:
                 self.feedback.append(
@@ -697,11 +688,18 @@ class TutorApp:
             self.finish_stroke()
             set_drawing_state(False)  # Send haptic feedback: stop drawing
 
-        # In free_draw, end stroke when hand disappears
-        if self.mode == "free_draw" and not result.hand_landmarks and self.drawing:
-            self.drawing = False
-            self.prev_point = None
-            self.finish_stroke()
+        # In free_draw, tolerate brief hand loss — use grace period
+        if self.mode == "free_draw" and self.drawing:
+            if result.hand_landmarks:
+                self.free_draw_lost_frames = 0
+            else:
+                self.free_draw_lost_frames += 1
+                # Allow up to 10 lost frames (~0.3s) before ending the stroke
+                if self.free_draw_lost_frames > 10:
+                    self.drawing = False
+                    self.prev_point = None
+                    self.finish_stroke()
+                    self.free_draw_lost_frames = 0
 
         return frame
 
@@ -834,9 +832,8 @@ class TutorApp:
                             self.character_complete = True
                             self.complete_time = time.time()
                             self.completed_characters += 1
-                            self.score += 100
                             self.feedback.append(
-                                f"Character {self.char_info['char']} complete! +100"
+                                f"Character {self.char_info['char']} complete!"
                             )
                         else:
                             self.feedback.append(
@@ -1355,7 +1352,6 @@ class TutorApp:
 
         put_text(display, mode_title, (20, 55), 32, COLOR_TEXT_TITLE)
         put_text(display, prompt, (20, 95), 38, COLOR_TEXT_TITLE)
-        put_text(display, f"Score: {self.score:05d}", (w - 250, 55), 32, COLOR_TEXT)
 
         bbox = self.drawing_bbox
         self._draw_drawing_box(display)
