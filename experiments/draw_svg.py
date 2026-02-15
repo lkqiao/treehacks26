@@ -110,6 +110,10 @@ def load_graphics(path: str):
                 data[char] = obj
     return data
 
+# Path relative to this file: experiments/draw_svg.py -> makemeahanzi/graphics.txt
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_GRAPHICS_PATH = os.path.join(_SCRIPT_DIR, "..", "makemeahanzi", "graphics.txt")
+DATA = load_graphics(_GRAPHICS_PATH)
 
 def character_to_stroke_svgs(char: str, obj: dict, viewbox: str = "0 0 1024 1024") -> str:
 
