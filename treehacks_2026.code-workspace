@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"name": "haptic_feedback",
+			"path": "../../PlatformIO/Projects/haptic_feedback"
+		}
+	],
+	"settings": {
+		"python-envs.defaultEnvManager": "ms-python.python:venv",
+		"python-envs.defaultPackageManager": "ms-python.python:pip"
+	}
+}
